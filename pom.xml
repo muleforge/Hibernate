@@ -181,5 +181,22 @@
 			<artifactId>mule-transport-stream</artifactId>
 			<version>${muleVersion}</version>
 		</dependency>
+		<!-- Hibernate Transport specific Dependencies -->
+		<dependency>
+			<groupId>org.mule.transports</groupId>
+			<artifactId>mule-transport-jdbc</artifactId>
+			<version>${muleVersion}</version>
+		</dependency>
+		 <dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate</artifactId>
+			<version>3.2.5.ga</version>
+        </dependency>
+        
+        <!--  dependency>
+                <groupId>commons-jxpath</groupId>
+                <artifactId>commons-jxpath</artifactId>
+        </dependency -->
+
 	</dependencies>
 </project>		
