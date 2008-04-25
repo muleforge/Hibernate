@@ -197,12 +197,12 @@
 			<version>${muleVersion}</version>
 		</dependency -->
 		<!-- Hibernate Transport specific Dependencies -->
-		<dependency>
+		<!-- dependency>
 			<groupId>org.mule.transports</groupId>
 			<artifactId>mule-transport-jdbc</artifactId>
 			<version>${muleVersion}</version>
 			<scope>provided</scope>
-		</dependency>
+		</dependency -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate</artifactId>
