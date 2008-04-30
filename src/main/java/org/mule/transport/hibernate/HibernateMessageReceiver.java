@@ -3,6 +3,7 @@ package org.mule.transport.hibernate;
 import java.util.Collections;
 import java.util.List;
 
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.mule.DefaultMuleMessage;
 import org.mule.api.MuleMessage;
@@ -24,13 +25,14 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 	private String ackStmt;
 	private boolean singleAck;
 	private boolean ackIsDelete;
+	private int maxResults;
 	
 	public HibernateMessageReceiver(Connector connector,
             Service service,
             InboundEndpoint endpoint,
             String readStmt, boolean singleMessage,
             String ackStmt, boolean singleAck,
-            long pollingFrequency) throws CreateException {
+            long pollingFrequency, int maxResults) throws CreateException {
 		super(connector, service, endpoint);
 		setFrequency(pollingFrequency);
 		this.hibernateConnector = (HibernateConnector) connector;
@@ -38,6 +40,7 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 		this.singleMessage = singleMessage;
 		this.ackStmt = ackStmt;
 		this.singleAck = singleAck;
+		this.maxResults = maxResults;
 		
 		if (logger.isDebugEnabled())
 			logger.debug("singleMessage = "+singleMessage+" ; singleAck = "+singleAck);
@@ -64,13 +67,20 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 				 throw new ConnectException(e, this);
 			 }
 			 
-			 List messages = session.createQuery(readStmt).list();
+			 Query q = session.createQuery(readStmt);
+			 if (maxResults > 0)
+				 q.setMaxResults(maxResults);
+
+			 List messages = q.list();
+
 			 if (singleMessage)
 				 return Collections.singletonList((Object) messages);
 			 else
 				 return messages;
 		 } finally {
-			 this.hibernateConnector.closeSession(session);
+			 Transaction tx = TransactionCoordination.getInstance().getTransaction();
+			 if (tx == null) 
+				 this.hibernateConnector.closeSession(session);
 		 }
 
 	}
@@ -98,7 +108,7 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
             		if (logger.isDebugEnabled())
             			logger.debug("processMessage::update "+message);
             		
-            		if (singleAck) {
+            		if (!singleMessage || singleAck) {
             			hibernateConnector.executeUpdate(session, ackStmt, message);
             		} else {
             			for (Object m : (List<Object>) message)

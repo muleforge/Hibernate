@@ -13,6 +13,8 @@ import org.mule.api.transaction.Transaction;
 import org.mule.api.transaction.TransactionException;
 import org.mule.api.transport.MessageReceiver;
 import org.mule.transaction.TransactionCoordination;
+import org.mule.transaction.XaTransaction;
+import org.mule.transaction.XaTransaction.MuleXaObject;
 import org.mule.transport.AbstractConnector;
 
 
@@ -141,9 +143,12 @@ public class HibernateConnector extends AbstractConnector {
 		if (logger.isDebugEnabled())
 			logger.debug("read query = '"+readQuery+"' ; ack update = '"+ackUpdate+"'");
 		
+		Integer maxResults = getLongProperty(endpoint, readName+".maxResults").intValue();
+        
 		Long pollingFrequency = getLongProperty(endpoint, "pollingFrequency");
+
+		return new Object[] { readQuery, singleMessage, ackUpdate, singleAck, pollingFrequency, maxResults };
 		
-		return new Object[] { readQuery, singleMessage, ackUpdate, singleAck, pollingFrequency };
 	}
 	
 	String createSenderParameter(ImmutableEndpoint endpoint) {
@@ -173,16 +178,26 @@ public class HibernateConnector extends AbstractConnector {
         if (tx != null) {
             if (tx.hasResource(sessionFactory)) {
                 logger.debug("Retrieving session from current transaction");
-                return (Session) tx.getResource(sessionFactory);
+                Object r = tx.getResource(sessionFactory);
+                if (r instanceof MuleXaSession) 
+                	return ((MuleXaSession) r).impl;
+                else
+                	return (Session) r;
+                
             }
         }
         logger.debug("Retrieving new session from session factory");
-        Session session = sessionFactory.openSession();
-
+        final Session session = sessionFactory.openSession();
         if (tx != null) {
             logger.debug("Binding session to current transaction");
             try {
-                tx.bindResource(sessionFactory, session);
+            	Object r;
+            	if (tx instanceof XaTransaction) 
+            		r = new MuleXaSession(session);
+            	else
+            		r = session;
+            	
+            	tx.bindResource(sessionFactory, r);
             } catch (TransactionException e) {
                 throw new RuntimeException("Could not bind connection to current transaction", e);
             }
@@ -195,6 +210,30 @@ public class HibernateConnector extends AbstractConnector {
 		session.close();
 	}
 
+	private class MuleXaSession implements MuleXaObject {
+		private Session impl;
+		
+		MuleXaSession(Session s) { this.impl = s; }
 
+		public void close() throws Exception {
+			closeSession(impl);
+		}
+
+		public boolean delist() throws Exception {
+			return false;
+		}
+
+		public Object getTargetObject() {
+			return impl;
+		}
+
+		public boolean isReuseObject() {
+			return false;
+		}
+
+		public void setReuseObject(boolean reuseObject) {
+		}
+
+	}
 
 }
