@@ -1,18 +1,24 @@
 package org.mule.providers.hibernate;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.jxpath.JXPathContext;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-
+import org.mule.MuleManager;
 import org.mule.config.i18n.CoreMessages;
+import org.mule.impl.internal.notifications.NotificationException;
+import org.mule.impl.internal.notifications.TransactionNotification;
+import org.mule.impl.internal.notifications.TransactionNotificationListener;
 import org.mule.providers.AbstractConnector;
 import org.mule.providers.jdbc.NowPropertyExtractor;
 import org.mule.transaction.TransactionCoordination;
+import org.mule.transaction.XaTransaction;
 import org.mule.umo.TransactionException;
 import org.mule.umo.UMOComponent;
 import org.mule.umo.UMOException;
@@ -20,13 +26,14 @@ import org.mule.umo.UMOTransaction;
 import org.mule.umo.endpoint.UMOEndpoint;
 import org.mule.umo.endpoint.UMOImmutableEndpoint;
 import org.mule.umo.lifecycle.InitialisationException;
+import org.mule.umo.manager.UMOServerNotification;
 import org.mule.umo.provider.UMOMessageReceiver;
 import org.mule.util.properties.JXPathPropertyExtractor;
 import org.mule.util.properties.PropertyExtractor;
 
 
 
-public class HibernateConnector extends AbstractConnector {
+public class HibernateConnector extends AbstractConnector implements TransactionNotificationListener {
 
 	private static final String _SINGLE_MESSAGE = ".singleMessage";
 	private static final String _ACK = ".ack";
@@ -39,6 +46,8 @@ public class HibernateConnector extends AbstractConnector {
 	//@SuppressWarnings("unchecked")
 	private List/*<Class>*/ queryValueExtractors;
 	private List/*<PropertyExtractor>*/ propertyExtractors;
+	private Map tx2s = new IdentityHashMap();
+	
 	// @SuppressWarnings("unchecked")
 	private static final List/*<Class>*/ DEFAULT_QUERY_VALUE_EXTRACTORS = new ArrayList/*<Class>*/();
 	static {
@@ -61,6 +70,14 @@ public class HibernateConnector extends AbstractConnector {
 		} catch (Exception e) {
 			throw new InitialisationException(CoreMessages.failedToCreate("Hibernate Connector"), e, this);	
 		}
+		if (MuleManager.getInstance().getTransactionManager() != null) {
+			try {
+				MuleManager.getInstance().registerListener(this);
+			} catch (NotificationException e) {
+				throw new InitialisationException(e, this);
+			}
+		}
+		
 	}
 
 	//@Override
@@ -181,8 +198,9 @@ public class HibernateConnector extends AbstractConnector {
 			logger.debug("read query = '"+readQuery+"' ; ack update = '"+ackUpdate+"'");
 		
 		Long pollingFrequency = getLongProperty(endpoint, "pollingFrequency");
+		Integer maxResults = new Integer(getLongProperty(endpoint, readName+".maxResults").intValue());
 		
-		return new Object[] { readQuery, singleMessage, ackUpdate, singleAck, pollingFrequency };
+		return new Object[] { readQuery, singleMessage, ackUpdate, singleAck, pollingFrequency, maxResults };
 	}
 	
 	String createSenderParameter(UMOImmutableEndpoint endpoint) {
@@ -212,16 +230,20 @@ public class HibernateConnector extends AbstractConnector {
         if (tx != null) {
             if (tx.hasResource(sessionFactory)) {
                 logger.debug("Retrieving session from current transaction");
-                return (Session) tx.getResource(sessionFactory);
+                return (Session) tx.getResource(sessionFactory); 
             }
         }
         logger.debug("Retrieving new session from session factory");
-        Session session = sessionFactory.openSession();
-
+        final Session session = sessionFactory.openSession();
         if (tx != null) {
             logger.debug("Binding session to current transaction");
             try {
-                tx.bindResource(sessionFactory, session);
+            	if (tx instanceof XaTransaction) {
+            		synchronized (tx2s) {
+						tx2s.put(tx, session);
+					}
+            	}
+            	tx.bindResource(sessionFactory, session);
             } catch (TransactionException e) {
                 throw new RuntimeException("Could not bind connection to current transaction", e);
             }
@@ -234,4 +256,20 @@ public class HibernateConnector extends AbstractConnector {
 		session.close();
 	}
 
+	
+	
+	public void onNotification(UMOServerNotification notification) {
+		if (notification instanceof TransactionNotification) {
+			TransactionNotification tn = (TransactionNotification) notification;
+			if (! tn.getActionName().equals("begin")) {
+				synchronized (tx2s) {
+					Session s = (Session) tx2s.remove(tn.getSource());
+					if (s != null) {
+						closeSession(s);
+					}
+				}
+			}
+		}
+	}
+	
 }

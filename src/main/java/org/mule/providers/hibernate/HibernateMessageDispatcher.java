@@ -78,6 +78,11 @@ public class HibernateMessageDispatcher extends AbstractMessageDispatcher {
         	logger.debug("Error dispatching event: " + e.getMessage(), e);
         	if (tx == null && stx != null)
         		stx.rollback();
+        	/* 
+        	 * FIXME: Shouldn't it be in an Exception strategy ?
+        	 */
+        	if (tx != null)
+        		tx.setRollbackOnly();
         	throw e;
         } finally {
         	if (tx == null)
