@@ -3,7 +3,6 @@ package org.mule.transport.hibernate;
 import org.hibernate.Session;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
-import org.mule.api.endpoint.ImmutableEndpoint;
 import org.mule.api.endpoint.OutboundEndpoint;
 import org.mule.api.transaction.Transaction;
 import org.mule.transaction.TransactionCoordination;
@@ -42,8 +41,7 @@ public class HibernateMessageDispatcher extends AbstractMessageDispatcher {
         if (logger.isDebugEnabled())
             logger.debug("Dispatch event: " + event);
    
-        ImmutableEndpoint endpoint = event.getEndpoint();
-        String writeStmt = connector.createSenderParameter(endpoint);
+        String writeStmt = event.getEndpoint().getEndpointURI().getAddress();
 
         Object payload = event.transformMessage();
         
@@ -60,7 +58,7 @@ public class HibernateMessageDispatcher extends AbstractMessageDispatcher {
         	if (writeStmt.equals("merge")) {
         		connector.getSessionMerge().merge(session, payload);
         	} else if (writeStmt.equals("delete")) {
-        		session.delete(payload);
+        		connector.getSessionDelete().delete(session, payload);
         	} else {
         		connector.executeUpdate(session, writeStmt, payload);
         	}

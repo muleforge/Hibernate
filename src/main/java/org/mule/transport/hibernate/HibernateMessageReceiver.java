@@ -26,6 +26,11 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 	private boolean singleAck;
 	private boolean ackIsDelete;
 	private int maxResults;
+	public static final String MAX_RESULTS = "maxResults";
+	public static final String SINGLE_ACK = "singleAck";
+	public static final String ACK = "ack";
+	public static final String SINGLE_MESSAGE = "singleMessage";
+	public static final String POLLING_FREQUENCY = "pollingFrequency";
 	
 	public HibernateMessageReceiver(Connector connector,
             Service service,

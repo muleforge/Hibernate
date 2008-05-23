@@ -9,11 +9,11 @@
 	<description>Provides support for data object management using the Hibernate object-relational mapping API.</description>
 	<packaging>jar</packaging>
 	<properties>
-		<muleVersion>2.0.0</muleVersion>
+		<muleVersion>2.0.1</muleVersion>
 		<shortId>HIBERNATE</shortId>
 		<domainName>hibernate</domainName>
 	</properties>
-	<version>2.0-${muleVersion}</version>
+	<version>2.0-${muleVersion}-SNAPSHOT</version>
 	<issueManagement>
 		<system>Jira</system>
 		<url>http://mule.mulesource.org/jira/browse/${shortId}</url>

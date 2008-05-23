@@ -5,7 +5,6 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.mule.api.MuleException;
-import org.mule.api.endpoint.ImmutableEndpoint;
 import org.mule.api.endpoint.InboundEndpoint;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.service.Service;
@@ -16,47 +15,36 @@ import org.mule.transaction.TransactionCoordination;
 import org.mule.transaction.XaTransaction;
 import org.mule.transaction.XaTransaction.MuleXaObject;
 import org.mule.transport.AbstractConnector;
+import org.mule.util.MapUtils;
 
 
 
 public class HibernateConnector extends AbstractConnector {
 
-	private static final String _SINGLE_MESSAGE = ".singleMessage";
-	private static final String _ACK = ".ack";
-	private static final String _SINGLE_ACK = ".singleAck";
+	public static final String HIBERNATE_PROTOCOL = "hibernate";
 	
-	private static final String HIBERNATE_PROTOCOL = "hibernate";
 	private SessionFactory sessionFactory;
+	
 	private HibernateSessionMerge sessionMerge;
 	private HibernateSessionDelete sessionDelete;
 	
 	@Override
-	protected void doInitialise() throws InitialisationException {
-		// TODO Auto-generated method stub
-		
-	}
+	protected void doInitialise() throws InitialisationException {}
 	
 	@Override
-	protected void doConnect() throws Exception {
-		
-	}
+	protected void doConnect() throws Exception {}
 
 	@Override
-	protected void doDisconnect() throws Exception {
-	}
+	protected void doDisconnect() throws Exception {}
 
 	@Override
-	protected void doDispose() {
-	}
-
+	protected void doDispose() {}
 
 	@Override
-	protected void doStart() throws MuleException {
-	}
+	protected void doStart() throws MuleException {}
 
 	@Override
-	protected void doStop() throws MuleException {
-	}
+	protected void doStop() throws MuleException {}
 
 	public String getProtocol() {
 		return HIBERNATE_PROTOCOL;
@@ -71,6 +59,9 @@ public class HibernateConnector extends AbstractConnector {
 	}
 
 	public HibernateSessionMerge getSessionMerge() {
+		/*
+		 * not synchronized, so we may return different objects unless it was passed via config, which is good enough 
+		 */
 		if (sessionMerge == null) {
 			sessionMerge = new HibernateSessionMerge() {
 				public Object merge(Session session, Object payload) {
@@ -87,6 +78,9 @@ public class HibernateConnector extends AbstractConnector {
 	}
 
 	public HibernateSessionDelete getSessionDelete() {
+		/*
+		 * not synchronized, so we may return different objects unless it was passed via config, which is good enough 
+		 */
 		if (sessionDelete == null) {
 			sessionDelete = new HibernateSessionDelete() {
 				public void delete(Session session, Object payload) {
@@ -107,56 +101,22 @@ public class HibernateConnector extends AbstractConnector {
 		return getServiceDescriptor().createMessageReceiver(this, service, endpoint, createReceiverParameters(endpoint));
     }
 	
-	private Boolean getBooleanProperty(ImmutableEndpoint endpoint, String property) {
-		String s = (String) endpoint.getProperty(property);
-		Boolean single = Boolean.FALSE;
-		if (s != null)
-			single = Boolean.valueOf(s);
-		return single;
-	}
-	
-	/*
-	 * org.mule.util.MapUtils new version have getLongValue()
-	 */
-	private Long getLongProperty(ImmutableEndpoint endpoint, String property) {
-		String s = (String) endpoint.getProperty(property);
-		long l = 0L;
-		if (s != null) {
-			try {
-				l = Long.parseLong(s); 
-			} catch (NumberFormatException e) {
-			}
-		}
-		return new Long(l);
-	}
-	
-	private Object[] createReceiverParameters(ImmutableEndpoint endpoint) {
-		String readName = endpoint.getEndpointURI().getHost();
-		if (logger.isDebugEnabled())
-			logger.debug("read query name = "+readName);
+	private Object[] createReceiverParameters(InboundEndpoint endpoint) {
 		
-		String readQuery = (String) endpoint.getProperty(readName);
-		Boolean singleMessage = getBooleanProperty(endpoint, readName+_SINGLE_MESSAGE);
-		String ackUpdate = (String) endpoint.getProperty(readName+_ACK);
-		Boolean singleAck = getBooleanProperty(endpoint, readName+_SINGLE_ACK);
+		String readQuery = endpoint.getEndpointURI().getAddress();
+		Boolean singleMessage = MapUtils.getBoolean(endpoint.getProperties(), HibernateMessageReceiver.SINGLE_MESSAGE, Boolean.FALSE);
+		String ackUpdate = (String) endpoint.getProperty(HibernateMessageReceiver.ACK);
+		Boolean singleAck = MapUtils.getBoolean(endpoint.getProperties(), HibernateMessageReceiver.SINGLE_ACK, Boolean.FALSE);
 		
 		if (logger.isDebugEnabled())
 			logger.debug("read query = '"+readQuery+"' ; ack update = '"+ackUpdate+"'");
 		
-		Integer maxResults = getLongProperty(endpoint, readName+".maxResults").intValue();
+		Integer maxResults = MapUtils.getInteger(endpoint.getProperties(), HibernateMessageReceiver.MAX_RESULTS, -1 /* anything <= 0 means infinite */);
         
-		Long pollingFrequency = getLongProperty(endpoint, "pollingFrequency");
+		Long pollingFrequency = MapUtils.getLong(endpoint.getProperties(), HibernateMessageReceiver.POLLING_FREQUENCY); // cannot be null, it's required
 
 		return new Object[] { readQuery, singleMessage, ackUpdate, singleAck, pollingFrequency, maxResults };
 		
-	}
-	
-	String createSenderParameter(ImmutableEndpoint endpoint) {
-		String writeName = endpoint.getEndpointURI().getHost();
-		logger.debug("write query name = "+writeName);
-		
-		String writeUpdate = (String) endpoint.getProperty(writeName);
-		return writeUpdate;
 	}
 	
 	void executeUpdate(Session session, String updateHql, Object payload) {
