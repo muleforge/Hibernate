@@ -1,9 +1,13 @@
 package org.mule.providers.hibernate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
+import org.hibernate.HibernateException;
+import org.hibernate.LockMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.mule.impl.MuleMessage;
@@ -27,13 +31,15 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 	private boolean singleAck;
 	private boolean ackIsDelete;
 	private int maxResults;
+	private Map lockModes;
 	
 	public HibernateMessageReceiver(UMOConnector connector,
             UMOComponent component,
             UMOEndpoint endpoint,
             String readStmt, boolean singleMessage,
             String ackStmt, boolean singleAck,
-            long pollingFrequency, int maxResults) throws InitialisationException {
+            long pollingFrequency, int maxResults,
+            Map lockModes) throws InitialisationException {
 		super(connector, component, endpoint, pollingFrequency);
 		this.hibernateConnector = (HibernateConnector) connector;
 		this.readStmt = readStmt;
@@ -41,6 +47,7 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 		this.ackStmt = ackStmt;
 		this.singleAck = singleAck;
 		this.maxResults = maxResults;
+		this.lockModes = lockModes;
 		
 		if (logger.isDebugEnabled())
 			logger.debug("singleMessage = "+singleMessage+" ; singleAck = "+singleAck);
@@ -68,10 +75,41 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 			 }
 			 
 			 Query q = session.createQuery(readStmt);
+			 
+			 for (Iterator iter = lockModes.entrySet().iterator(); iter.hasNext(); ) {
+				 Map.Entry e = (Map.Entry) iter.next();
+				 logger.debug("set LockMode for "+e.getKey()+" to "+e.getValue());
+				 q.setLockMode((String) e.getKey(), (LockMode) e.getValue());
+			 }
+			 /*
+			 String[] aliases = q.getReturnAliases();
+			 if (aliases != null) {
+				 for (int i = 0; i < aliases.length ; i++) {
+					 logger.debug("set LockMode for "+aliases[i]);
+					 q.setLockMode(aliases[i], LockMode.UPGRADE);
+				 }
+			 } else {
+				 logger.warn("Not aliases in query: "+readStmt);
+			 }
+			 */
 			 if (maxResults > 0)
 				 q.setMaxResults(maxResults);
 			 
 			 List messages = q.list();
+			 
+			 /*
+			 List lockedMessages = new ArrayList();
+			 
+			 for (Iterator iter = messages.iterator(); iter.hasNext();) {
+				 try {
+					 Object nextMessage = iter.next();
+					 session.lock(nextMessage, LockMode.UPGRADE_NOWAIT);
+					 lockedMessages.add(nextMessage);
+				 } catch (HibernateException e) {
+					 
+				 }
+			 }
+			 */
 			 
 			 if (singleMessage)
 				 return Collections.singletonList((Object) messages);

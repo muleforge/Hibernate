@@ -3,10 +3,13 @@ package org.mule.providers.hibernate;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.apache.commons.jxpath.JXPathContext;
+import org.hibernate.LockMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -28,6 +31,7 @@ import org.mule.umo.endpoint.UMOImmutableEndpoint;
 import org.mule.umo.lifecycle.InitialisationException;
 import org.mule.umo.manager.UMOServerNotification;
 import org.mule.umo.provider.UMOMessageReceiver;
+import org.mule.util.MapUtils;
 import org.mule.util.properties.JXPathPropertyExtractor;
 import org.mule.util.properties.PropertyExtractor;
 
@@ -200,7 +204,27 @@ public class HibernateConnector extends AbstractConnector implements Transaction
 		Long pollingFrequency = getLongProperty(endpoint, "pollingFrequency");
 		Integer maxResults = new Integer(getLongProperty(endpoint, readName+".maxResults").intValue());
 		
-		return new Object[] { readQuery, singleMessage, ackUpdate, singleAck, pollingFrequency, maxResults };
+		String lockModes = (String) endpoint.getProperty(readName+".lockModes");
+		Map lockModeMap = new LinkedHashMap();
+		
+		if (lockModes != null) {
+		StringTokenizer st = new StringTokenizer(lockModes, ";");
+		
+		while (st.hasMoreTokens()) {
+			String t = st.nextToken();
+			int i = t.indexOf('=');
+			if (i != -1) {
+				String alias = t.substring(0, i);
+				if (i < t.length()) {
+					String lockMode = t.substring(i+1);
+					lockModeMap.put(alias, LockMode.parse(lockMode));
+				}
+			}
+			
+		}
+		}
+		
+		return new Object[] { readQuery, singleMessage, ackUpdate, singleAck, pollingFrequency, maxResults, lockModeMap };
 	}
 	
 	String createSenderParameter(UMOImmutableEndpoint endpoint) {
