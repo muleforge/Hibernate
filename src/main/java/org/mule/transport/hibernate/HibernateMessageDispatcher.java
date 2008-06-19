@@ -7,14 +7,21 @@ import org.mule.api.endpoint.OutboundEndpoint;
 import org.mule.api.transaction.Transaction;
 import org.mule.transaction.TransactionCoordination;
 import org.mule.transport.AbstractMessageDispatcher;
+import org.mule.util.MapUtils;
 
 public class HibernateMessageDispatcher extends AbstractMessageDispatcher {
 
 	private HibernateConnector connector;
+	private HibernateSessionQuery sessionChange;
+	
+	public static final Object CREATE_CHANGE = "createChange";
 	
 	public HibernateMessageDispatcher(OutboundEndpoint endpoint) {
 		super(endpoint);
 		this.connector = (HibernateConnector) endpoint.getConnector();
+		this.sessionChange = (HibernateSessionQuery) MapUtils.getObject(endpoint.getProperties(), CREATE_CHANGE);
+		if (this.sessionChange == null)
+			this.sessionChange = new HibernateSessionDefaultQuery();
 	}
 
 	@Override
@@ -55,18 +62,20 @@ public class HibernateMessageDispatcher extends AbstractMessageDispatcher {
         	if (tx == null)
         		stx = session.beginTransaction();
         	
-        	if (writeStmt.equals("merge")) {
+        	if (endpoint.getProperties().containsKey(CREATE_CHANGE)) { // not default settings, so override merge or delete
+        		sessionChange.createUpdateQuery(session, writeStmt, payload).executeUpdate();
+        	} else if (writeStmt.equals("merge")) {
         		connector.getSessionMerge().merge(session, payload);
         	} else if (writeStmt.equals("delete")) {
         		connector.getSessionDelete().delete(session, payload);
         	} else {
-        		connector.executeUpdate(session, writeStmt, payload);
+        		sessionChange.createUpdateQuery(session, writeStmt, payload).executeUpdate();
         	}
         	session.flush();
         	if (tx == null) 
         		stx.commit();
         	
-            logger.debug("Event dispatched succesfully");
+            logger.debug("Event dispatched successfully");
         } catch (Exception e) {
         	logger.debug("Error dispatching event: " + e.getMessage(), e);
         	if (tx == null && stx != null)

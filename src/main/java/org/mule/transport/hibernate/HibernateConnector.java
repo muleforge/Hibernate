@@ -1,7 +1,5 @@
 package org.mule.transport.hibernate;
 
-import org.apache.commons.jxpath.JXPathContext;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.mule.api.MuleException;
@@ -91,7 +89,7 @@ public class HibernateConnector extends AbstractConnector {
 		
 		return sessionDelete;
 	}
-
+	
 	public void setSessionDelete(HibernateSessionDelete sessionDelete) {
 		this.sessionDelete = sessionDelete;
 	}
@@ -111,26 +109,30 @@ public class HibernateConnector extends AbstractConnector {
 		if (logger.isDebugEnabled())
 			logger.debug("read query = '"+readQuery+"' ; ack update = '"+ackUpdate+"'");
 		
-		Integer maxResults = MapUtils.getInteger(endpoint.getProperties(), HibernateMessageReceiver.MAX_RESULTS, -1 /* anything <= 0 means infinite */);
-        
+		
+		
+		HibernateSessionQuery sessionQuery = (HibernateSessionQuery) MapUtils.getObject(endpoint.getProperties(), HibernateMessageReceiver.CREATE_QUERY);
+		HibernateSessionDefaultQuery defaultQuery = null;
+		if (sessionQuery == null) {
+			defaultQuery = new HibernateSessionDefaultQuery();
+		
+			int maxResults = MapUtils.getInteger(endpoint.getProperties(), HibernateMessageReceiver.MAX_RESULTS, -1 /* anything <= 0 means infinite */);
+			defaultQuery.setMaxResults(maxResults);
+			
+			sessionQuery = defaultQuery;
+		}
+		
+		HibernateSessionQuery sessionAck = (HibernateSessionQuery) MapUtils.getObject(endpoint.getProperties(), HibernateMessageReceiver.CREATE_ACK);
+        if (sessionAck == null) {
+        	sessionAck = defaultQuery != null ? defaultQuery : new HibernateSessionDefaultQuery();
+        }
+		
 		Long pollingFrequency = MapUtils.getLong(endpoint.getProperties(), HibernateMessageReceiver.POLLING_FREQUENCY); // cannot be null, it's required
-
-		return new Object[] { readQuery, singleMessage, ackUpdate, singleAck, pollingFrequency, maxResults };
+		
+		return new Object[] { sessionQuery, readQuery, singleMessage, sessionAck, ackUpdate, singleAck, pollingFrequency };
 		
 	}
 	
-	void executeUpdate(Session session, String updateHql, Object payload) {
-		Query q = session.createQuery(updateHql);
-		
-		String[] np = q.getNamedParameters();
-		if (np != null && np.length > 0) {
-			JXPathContext context = JXPathContext.newContext(payload);
-			//for (String p : np)
-			for (int i = 0 ; i < np.length; i++)
-				q.setParameter(np[i], context.getValue(np[i]));
-		}
-		q.executeUpdate();
-	}
 	
 	Session getSession() throws Exception
     {

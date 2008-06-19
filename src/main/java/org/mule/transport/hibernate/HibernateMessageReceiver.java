@@ -25,19 +25,21 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 	private String ackStmt;
 	private boolean singleAck;
 	private boolean ackIsDelete;
-	private int maxResults;
+	private HibernateSessionQuery sessionQuery, sessionAck;
 	public static final String MAX_RESULTS = "maxResults";
 	public static final String SINGLE_ACK = "singleAck";
 	public static final String ACK = "ack";
 	public static final String SINGLE_MESSAGE = "singleMessage";
 	public static final String POLLING_FREQUENCY = "pollingFrequency";
+	public static final Object CREATE_QUERY = "createQuery";
+	public static final Object CREATE_ACK = "createAck";
 	
 	public HibernateMessageReceiver(Connector connector,
             Service service,
             InboundEndpoint endpoint,
-            String readStmt, boolean singleMessage,
-            String ackStmt, boolean singleAck,
-            long pollingFrequency, int maxResults) throws CreateException {
+            HibernateSessionQuery sessionQuery, String readStmt, boolean singleMessage, 
+            HibernateSessionQuery sessionAck, String ackStmt, boolean singleAck,
+            long pollingFrequency) throws CreateException {
 		super(connector, service, endpoint);
 		setFrequency(pollingFrequency);
 		this.hibernateConnector = (HibernateConnector) connector;
@@ -45,7 +47,8 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 		this.singleMessage = singleMessage;
 		this.ackStmt = ackStmt;
 		this.singleAck = singleAck;
-		this.maxResults = maxResults;
+		this.sessionQuery = sessionQuery;
+		this.sessionAck = sessionAck;
 		
 		if (logger.isDebugEnabled())
 			logger.debug("singleMessage = "+singleMessage+" ; singleAck = "+singleAck);
@@ -72,9 +75,7 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 				 throw new ConnectException(e, this);
 			 }
 			 
-			 Query q = session.createQuery(readStmt);
-			 if (maxResults > 0)
-				 q.setMaxResults(maxResults);
+			 Query q = sessionQuery.createSelectQuery(session, readStmt);
 
 			 List messages = q.list();
 
@@ -104,20 +105,20 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
             		if (logger.isDebugEnabled())
             			logger.debug("processMessage::delete "+message);
             		if (singleAck) {
-            			session.delete(message);
+            			hibernateConnector.getSessionDelete().delete(session, message);
             		} else {
             			for (Object m : (List<Object>) message)
-            				session.delete(m);
+            				hibernateConnector.getSessionDelete().delete(session, m);
             		}
             	} else {
             		if (logger.isDebugEnabled())
             			logger.debug("processMessage::update "+message);
             		
             		if (!singleMessage || singleAck) {
-            			hibernateConnector.executeUpdate(session, ackStmt, message);
+            			sessionAck.createUpdateQuery(session, ackStmt, message).executeUpdate();
             		} else {
             			for (Object m : (List<Object>) message)
-            				hibernateConnector.executeUpdate(session, ackStmt, m);
+            				sessionAck.createUpdateQuery(session, ackStmt, m).executeUpdate();
             		}
             	}
             }

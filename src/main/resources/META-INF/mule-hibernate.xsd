@@ -26,12 +26,14 @@
     <xsd:complexType name="inboundEndpointType">
         <xsd:complexContent>
             <xsd:extension base="mule:inboundEndpointType">
+                <xsd:attribute name="createQuery-ref" type="xsd:NMTOKEN"/>
                 <xsd:attribute name="query" type="xsd:string" use="required"/>
-                <xsd:attribute name="pollingFrequency" type="mule:substitutableLong" use="required"/>
                 <xsd:attribute name="singleMessage" type="mule:substitutableBoolean"/>
+                <xsd:attribute name="maxResults" type="mule:substitutableInt"/><!--  used only if createQuery-ref is not set, otherwise ignored -->
+                <xsd:attribute name="createAck-ref" type="xsd:NMTOKEN"/>
                 <xsd:attribute name="ack" type="xsd:string"/>
                 <xsd:attribute name="singleAck" type="mule:substitutableBoolean"/>
-                <xsd:attribute name="maxResults" type="mule:substitutableInt"/>
+                <xsd:attribute name="pollingFrequency" type="mule:substitutableLong" use="required"/>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -40,7 +42,8 @@
     <xsd:complexType name="outboundEndpointType">
         <xsd:complexContent>
             <xsd:extension base="mule:outboundEndpointType">
-          		<xsd:attribute name="change" type="xsd:string" use="required"/>
+                <xsd:attribute name="createChange-ref" type="xsd:NMTOKEN"/>
+            	<xsd:attribute name="change" type="xsd:string" use="required"/>
           	</xsd:extension>
        	</xsd:complexContent>
     </xsd:complexType>
