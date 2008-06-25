@@ -1,4 +1,4 @@
-package org.mule.transport.hibernate;
+package org.mule.providers.hibernate;
 
 import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
@@ -7,7 +7,7 @@ import org.hibernate.Transaction;
 import org.mule.config.i18n.CoreMessages;
 import org.mule.transaction.AbstractSingleResourceTransaction;
 import org.mule.transaction.IllegalTransactionStateException;
-import org.mule.api.transaction.TransactionException;
+import org.mule.umo.TransactionException;
 
 public class HibernateTransaction extends AbstractSingleResourceTransaction {
 
@@ -28,12 +28,12 @@ public class HibernateTransaction extends AbstractSingleResourceTransaction {
 		super.bindResource(key, resource);
 	}
 	
-	@Override
+	//@Override
 	protected void doBegin() throws TransactionException {
 		// called _before_ bindResource
 	}
 
-	@Override
+	//@Override
 	protected void doCommit() throws TransactionException {
 		try {
 			Session s = (Session) resource;
@@ -45,7 +45,7 @@ public class HibernateTransaction extends AbstractSingleResourceTransaction {
         }
 	}
 
-	@Override
+	//@Override
 	protected void doRollback() throws TransactionException {
 		try {
 			Session s = (Session) resource;
