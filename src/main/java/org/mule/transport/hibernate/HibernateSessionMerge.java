@@ -1,4 +1,4 @@
-package org.mule.providers.hibernate;
+package org.mule.transport.hibernate;
 
 import org.hibernate.Session;
 
