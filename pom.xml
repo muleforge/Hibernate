@@ -1,7 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.mule.transports</groupId>
 	<artifactId>mule-transport-hibernate</artifactId>
@@ -13,20 +10,16 @@
 		<domainName>hibernate</domainName>
 		<muleVersion>1.4.4</muleVersion>
 	</properties>
-	<version>1.1-SNAPSHOT</version>
+	<version>1.1</version>
 	<issueManagement>
 		<system>Jira</system>
 		<url>http://mule.mulesource.org/jira/browse/${shortId}</url>
 	</issueManagement>
 	<scm>
-		<connection>
-			scm:svn:http://svn.muleforge.org/${domainName}/
-		</connection>
-		<developerConnection>
-			scm:svn:https://svn.muleforge.org/${domainName}/
-		</developerConnection>
+		<connection>scm:svn:http://svn.muleforge.org/hibernate/tags/1.1</connection>
+		<developerConnection>scm:svn:https://svn.muleforge.org/hibernate/tags/1.1</developerConnection>
 		<tag>HEAD</tag>
-		<url>http://svn.${domainName}.muleforge.org/</url>
+		<url>http://svn.hibernate.muleforge.org/tags/1.1</url>
 	</scm>
 	<ciManagement>
 		<system>Bamboo</system>
@@ -210,4 +203,4 @@
         </dependency -->
 
 	</dependencies>
-</project>		
+</project>
