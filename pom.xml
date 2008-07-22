@@ -8,7 +8,7 @@
 	<properties>
 		<shortId>HIBERNATE</shortId>
 		<domainName>hibernate</domainName>
-		<muleVersion>1.4.4</muleVersion>
+		<muleVersion>[1.4.4,1.6)</muleVersion>
 	</properties>
 	<version>1.2-SNAPSHOT</version>
 	<issueManagement>
