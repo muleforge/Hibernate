@@ -22,6 +22,7 @@ import org.mule.providers.AbstractConnector;
 import org.mule.providers.jdbc.NowPropertyExtractor;
 import org.mule.transaction.TransactionCoordination;
 import org.mule.transaction.XaTransaction;
+import org.mule.transaction.XaTransaction.MuleXaObject;
 import org.mule.umo.TransactionException;
 import org.mule.umo.UMOComponent;
 import org.mule.umo.UMOException;
@@ -36,7 +37,7 @@ import org.mule.util.properties.PropertyExtractor;
 
 
 
-public class HibernateConnector extends AbstractConnector implements TransactionNotificationListener {
+public class HibernateConnector extends AbstractConnector {
 
 	private static final String _SINGLE_MESSAGE = ".singleMessage";
 	private static final String _ACK = ".ack";
@@ -49,7 +50,6 @@ public class HibernateConnector extends AbstractConnector implements Transaction
 	//@SuppressWarnings("unchecked")
 	private List/*<Class>*/ queryValueExtractors;
 	private List/*<PropertyExtractor>*/ propertyExtractors;
-	private Map tx2s = new IdentityHashMap();
 	
 	// @SuppressWarnings("unchecked")
 	private static final List/*<Class>*/ DEFAULT_QUERY_VALUE_EXTRACTORS = new ArrayList/*<Class>*/();
@@ -73,14 +73,6 @@ public class HibernateConnector extends AbstractConnector implements Transaction
 		} catch (Exception e) {
 			throw new InitialisationException(CoreMessages.failedToCreate("Hibernate Connector"), e, this);	
 		}
-		if (MuleManager.getInstance().getTransactionManager() != null) {
-			try {
-				MuleManager.getInstance().registerListener(this);
-			} catch (NotificationException e) {
-				throw new InitialisationException(e, this);
-			}
-		}
-		
 	}
 
 	//@Override
@@ -253,7 +245,12 @@ public class HibernateConnector extends AbstractConnector implements Transaction
         if (tx != null) {
             if (tx.hasResource(sessionFactory)) {
                 logger.debug("Retrieving session from current transaction");
-                return (Session) tx.getResource(sessionFactory); 
+                Object r = tx.getResource(sessionFactory);
+                if (r instanceof MuleXaSession) 
+                	return ((MuleXaSession) r).impl;
+                else
+                	return (Session) r;
+                
             }
         }
         logger.debug("Retrieving new session from session factory");
@@ -261,12 +258,13 @@ public class HibernateConnector extends AbstractConnector implements Transaction
         if (tx != null) {
             logger.debug("Binding session to current transaction");
             try {
-            	if (tx instanceof XaTransaction) {
-            		synchronized (tx2s) {
-						tx2s.put(tx, session);
-					}
-            	}
-            	tx.bindResource(sessionFactory, session);
+            	Object r;
+            	if (tx instanceof XaTransaction) 
+            		r = new MuleXaSession(session);
+            	else
+            		r = session;
+            	
+            	tx.bindResource(sessionFactory, r);
             } catch (TransactionException e) {
                 throw new RuntimeException("Could not bind connection to current transaction", e);
             }
@@ -279,20 +277,34 @@ public class HibernateConnector extends AbstractConnector implements Transaction
 		session.close();
 	}
 
-	
-	
-	public void onNotification(UMOServerNotification notification) {
-		if (notification instanceof TransactionNotification) {
-			TransactionNotification tn = (TransactionNotification) notification;
-			if (! tn.getActionName().equals("begin")) {
-				synchronized (tx2s) {
-					Session s = (Session) tx2s.remove(tn.getSource());
-					if (s != null) {
-						closeSession(s);
-					}
-				}
-			}
+	private class MuleXaSession implements MuleXaObject {
+		private Session impl;
+		
+		MuleXaSession(Session s) { this.impl = s; }
+
+		public void close() throws Exception {
+			closeSession(impl);
 		}
+
+		public boolean enlist() throws TransactionException {
+			return false;
+		}
+		
+		public boolean delist() throws Exception {
+			return false;
+		}
+
+		public Object getTargetObject() {
+			return impl;
+		}
+
+		public boolean isReuseObject() {
+			return false;
+		}
+
+		public void setReuseObject(boolean reuseObject) {
+		}
+
 	}
 	
 }

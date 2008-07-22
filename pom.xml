@@ -8,9 +8,9 @@
 	<properties>
 		<shortId>HIBERNATE</shortId>
 		<domainName>hibernate</domainName>
-		<muleVersion>1.4.4</muleVersion>
+		<muleVersion>1.6.1-EE</muleVersion>
 	</properties>
-	<version>1.2-SNAPSHOT</version>
+	<version>1.6.0</version>
 	<issueManagement>
 		<system>Jira</system>
 		<url>http://mule.mulesource.org/jira/browse/${shortId}</url>
@@ -194,6 +194,11 @@
 			<artifactId>hibernate</artifactId>
 			<version>3.2.5.ga</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.geronimo.specs</groupId>
+			<artifactId>geronimo-j2ee-connector_1.5_spec</artifactId>
+			<version>1.1</version>
 		</dependency>
         
         <!--  dependency>
