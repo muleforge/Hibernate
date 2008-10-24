@@ -2,6 +2,7 @@ package org.mule.transport.hibernate;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -99,7 +100,7 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
         try {
             session = hibernateConnector.getSession();
             MessageAdapter msgAdapter = connector.getMessageAdapter(message);
-            MuleMessage umoMessage = new DefaultMuleMessage(msgAdapter);
+            MuleMessage umoMessage = new DefaultMuleMessage(msgAdapter, (Map) null);
             if (ackStmt != null) {
             	if (ackIsDelete) {
             		if (logger.isDebugEnabled())

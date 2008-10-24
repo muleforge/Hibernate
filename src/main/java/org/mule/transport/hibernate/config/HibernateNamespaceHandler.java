@@ -6,7 +6,6 @@ import org.mule.config.spring.handlers.AbstractMuleNamespaceHandler;
 import org.mule.config.spring.parsers.specific.TransactionDefinitionParser;
 import org.mule.config.spring.parsers.specific.endpoint.TransportEndpointDefinitionParser;
 import org.mule.endpoint.URIBuilder;
-import org.mule.transaction.XaTransactionFactory;
 import org.mule.transport.hibernate.HibernateConnector;
 import org.mule.transport.hibernate.HibernateMessageReceiver;
 import org.mule.transport.hibernate.HibernateTransactionFactory;
@@ -36,7 +35,6 @@ public class HibernateNamespaceHandler extends AbstractMuleNamespaceHandler {
 		registerBeanDefinitionParser("outbound-endpoint", outboundParser);
 		
 		registerBeanDefinitionParser("transaction", new TransactionDefinitionParser(HibernateTransactionFactory.class));
-		registerBeanDefinitionParser("xa-transaction", new TransactionDefinitionParser(XaTransactionFactory.class));
 	}
 
 }

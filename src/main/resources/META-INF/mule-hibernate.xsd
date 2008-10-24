@@ -49,6 +49,5 @@
     </xsd:complexType>
     
     <xsd:element name="transaction" type="mule:baseTransactionType" substitutionGroup="mule:abstract-transaction"/>      
-    <xsd:element name="xa-transaction" type="mule:baseTransactionType" substitutionGroup="mule:abstract-transaction"/>      
                 
 </xsd:schema>

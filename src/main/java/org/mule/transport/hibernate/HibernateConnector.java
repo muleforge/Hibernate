@@ -180,9 +180,13 @@ public class HibernateConnector extends AbstractConnector {
 		public void close() throws Exception {
 			closeSession(impl);
 		}
+		
+		public boolean enlist() throws TransactionException {
+			return true;
+		}
 
 		public boolean delist() throws Exception {
-			return false;
+			return true;
 		}
 
 		public Object getTargetObject() {
