@@ -6,7 +6,7 @@
 	<description>Provides support for data object management using the Hibernate object-relational mapping API.</description>
 	<packaging>jar</packaging>
 	<properties>
-		<muleVersion>2.1.3</muleVersion>
+		<muleVersion>2.1.2/muleVersion>
 		<shortId>HIBERNATE</shortId>
 		<domainName>hibernate</domainName>
 	</properties>
