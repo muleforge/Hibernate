@@ -10,7 +10,7 @@
 		<shortId>HIBERNATE</shortId>
 		<domainName>hibernate</domainName>
 	</properties>
-	<version>2.1-SNAPSHOT</version>
+	<version>2.1</version>
 	<issueManagement>
 		<system>Jira</system>
 		<url>http://mule.mulesource.org/jira/browse/${shortId}</url>
