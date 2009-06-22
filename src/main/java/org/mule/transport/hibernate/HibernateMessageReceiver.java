@@ -79,6 +79,8 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 			 Query q = sessionQuery.createSelectQuery(session, readStmt);
 
 			 List messages = q.list();
+            		 if (logger.isDebugEnabled())
+            			logger.debug("messages: "+messages);
 
 			 if (singleMessage)
 				 return Collections.singletonList((Object) messages);
