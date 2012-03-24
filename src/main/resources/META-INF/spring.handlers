@@ -1,1 +1,1 @@
-http\://www.mulesource.org/schema/mule/hibernate/2.2=org.mule.transport.hibernate.config.HibernateNamespaceHandler
+http\://tabletlive.com/schema/mule/hibernate=org.mule.transport.hibernate.config.HibernateNamespaceHandler

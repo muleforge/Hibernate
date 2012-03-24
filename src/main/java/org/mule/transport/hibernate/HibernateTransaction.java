@@ -7,9 +7,15 @@ import org.hibernate.Transaction;
 import org.mule.config.i18n.CoreMessages;
 import org.mule.transaction.AbstractSingleResourceTransaction;
 import org.mule.transaction.IllegalTransactionStateException;
+import org.mule.api.MuleContext;
 import org.mule.api.transaction.TransactionException;
 
 public class HibernateTransaction extends AbstractSingleResourceTransaction {
+
+	protected HibernateTransaction(MuleContext muleContext) {
+		super(muleContext);
+		// TODO Auto-generated constructor stub
+	}
 
 	private Transaction sessionTx;
 	

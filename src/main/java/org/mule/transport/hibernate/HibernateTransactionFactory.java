@@ -8,7 +8,7 @@ import org.mule.api.transaction.TransactionFactory;
 public class HibernateTransactionFactory implements TransactionFactory {
 
     public Transaction beginTransaction(MuleContext muleContext) throws TransactionException {
-        Transaction tx = new HibernateTransaction();
+        Transaction tx = new HibernateTransaction(muleContext);
         tx.begin();
         return tx;
     }

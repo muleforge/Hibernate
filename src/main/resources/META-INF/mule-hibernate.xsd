@@ -1,17 +1,34 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<xsd:schema xmlns="http://www.mulesource.org/schema/mule/hibernate/2.2"
+<xsd:schema xmlns="http://tabletlive.com/schema/mule/hibernate"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:mule="http://www.mulesource.org/schema/mule/core/2.2"
-            targetNamespace="http://www.mulesource.org/schema/mule/hibernate/2.2"
+            xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+            xmlns:schemadoc="http://www.mulesoft.org/schema/mule/schemadoc"
+            targetNamespace="http://tabletlive.com/schema/mule/hibernate"
             elementFormDefault="qualified"
             attributeFormDefault="unqualified">
 
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-    <xsd:import namespace="http://www.mulesource.org/schema/mule/core/2.2"
-                schemaLocation="http://www.mulesource.org/schema/mule/core/2.2/mule.xsd" />
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:import namespace="http://www.mulesoft.org/schema/mule/core"
+                schemaLocation="http://www.mulesoft.org/schema/mule/core/3.1/mule.xsd" />
+    <xsd:import namespace = "http://www.mulesoft.org/schema/mule/schemadoc"
+                schemaLocation = "http://www.mulesoft.org/schema/mule/schemadoc/3.1/mule-schemadoc.xsd"/>
+
+	<xsd:annotation>
+        <xsd:documentation>Enables Hibernate support in mule for inbound and outbound connectors</xsd:documentation>
+        <xsd:appinfo>
+            <schemadoc:short-name>Hibernate</schemadoc:short-name>
+            <schemadoc:page-title>Hibernate Transport</schemadoc:page-title>
+            <schemadoc:transport-features
+            receiveEvents="false" dispatchEvents="false" responseEvents="true"
+                                          requestEvents="false"
+                                          transactions="false" streaming="false">
+                <schemadoc:inboundMEPs in-only="false" in-optional-out="true" in-out="true"/>
+                <schemadoc:outboundMEPs out-only="true" out-in="true" out-optional-in="true"/>
+            </schemadoc:transport-features>
+        </xsd:appinfo>
+    </xsd:annotation>
 
     <xsd:element name="connector" type="hibernateConnectorType" substitutionGroup="mule:abstract-connector"/>
-
     <xsd:complexType name="hibernateConnectorType">
         <xsd:complexContent>
             <xsd:extension base="mule:connectorType">

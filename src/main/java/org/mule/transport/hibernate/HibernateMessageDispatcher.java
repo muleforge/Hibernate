@@ -47,9 +47,10 @@ public class HibernateMessageDispatcher extends AbstractMessageDispatcher {
 	protected void doDispatch(MuleEvent event) throws Exception {
         if (logger.isDebugEnabled())
             logger.debug("Dispatch event: " + event);
-   
-        String writeStmt = event.getEndpoint().getEndpointURI().getAddress();
-
+                
+        //String writeStmt = event.getEndpoint().getEndpointURI().getAddress();
+       String writeStmt = endpoint.getEndpointURI().getAddress();
+        
         Object payload = event.transformMessage();
         
         Transaction tx = TransactionCoordination.getInstance().getTransaction();

@@ -5,7 +5,7 @@
 	<modelVersion>2.1-SNAPSHOT</modelVersion>
 	<groupId>org.mule.transports</groupId>
 	<properties>
-		<muleVersion>2.2.1</muleVersion>
+		<muleVersion>3.2.1</muleVersion>
 	</properties>
 	<version>2.2.0</version>
 	<artifactId>mule-transport-hibernate</artifactId>
