@@ -2,7 +2,9 @@ package org.mule.transport.hibernate;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.mule.api.MuleContext;
 import org.mule.api.MuleException;
+import org.mule.api.construct.FlowConstruct;
 import org.mule.api.endpoint.InboundEndpoint;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.service.Service;
@@ -18,6 +20,11 @@ import org.mule.util.MapUtils;
 
 
 public class HibernateConnector extends AbstractConnector {
+
+	public HibernateConnector(MuleContext context) {
+		super(context);
+		// TODO Auto-generated constructor stub
+	}
 
 	public static final String HIBERNATE_PROTOCOL = "hibernate";
 	
@@ -93,11 +100,12 @@ public class HibernateConnector extends AbstractConnector {
 	public void setSessionDelete(HibernateSessionDelete sessionDelete) {
 		this.sessionDelete = sessionDelete;
 	}
-	
+		
 	@Override
-	protected MessageReceiver createReceiver(Service service, InboundEndpoint endpoint) throws Exception {
-		return getServiceDescriptor().createMessageReceiver(this, service, endpoint, createReceiverParameters(endpoint));
-    }
+	protected MessageReceiver createReceiver(FlowConstruct flowConstruct, InboundEndpoint endpoint) throws Exception {
+		
+		return getServiceDescriptor().createMessageReceiver(this, flowConstruct, endpoint);
+	}
 	
 	private Object[] createReceiverParameters(InboundEndpoint endpoint) {
 		

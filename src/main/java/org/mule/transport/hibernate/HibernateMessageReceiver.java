@@ -13,7 +13,7 @@ import org.mule.api.lifecycle.CreateException;
 import org.mule.api.service.Service;
 import org.mule.api.transaction.Transaction;
 import org.mule.api.transport.Connector;
-import org.mule.api.transport.MessageAdapter;
+
 import org.mule.transaction.TransactionCoordination;
 import org.mule.transport.ConnectException;
 import org.mule.transport.TransactedPollingMessageReceiver;
@@ -67,7 +67,7 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	protected List<Object> getMessages() throws Exception {
+	protected List<MuleMessage> getMessages() throws Exception {
 		 Session session = null;
 		 try {
 			 try {
@@ -83,7 +83,7 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
             			logger.debug("messages: "+messages);
 
 			 if (singleMessage)
-				 return Collections.singletonList((Object) messages);
+				 return Collections.singletonList((MuleMessage) messages);
 			 else
 				 return messages;
 		 } finally {
@@ -101,8 +101,8 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
         Transaction tx = TransactionCoordination.getInstance().getTransaction();
         try {
             session = hibernateConnector.getSession();
-            MessageAdapter msgAdapter = connector.getMessageAdapter(message);
-            MuleMessage umoMessage = new DefaultMuleMessage(msgAdapter, (Map) null);
+            
+            MuleMessage umoMessage = new DefaultMuleMessage(message, connector.getMuleContext());
             if (ackStmt != null) {
             	if (ackIsDelete) {
             		if (logger.isDebugEnabled())
@@ -125,7 +125,12 @@ public class HibernateMessageReceiver extends TransactedPollingMessageReceiver {
             		}
             	}
             }
-            routeMessage(umoMessage, tx, tx != null || endpoint.isSynchronous());
+            
+            routeMessage(umoMessage, tx);
+            
+            // TODO: investigate why below parameters are different
+            //routeMessage(umoMessage, tx, tx != null || endpoint.isSynchronous());
+            
         } catch (Exception e) {
             if (tx != null) 
                 tx.setRollbackOnly();
